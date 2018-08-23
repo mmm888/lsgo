@@ -8,10 +8,23 @@ type Options struct {
 	all   bool
 	human bool
 	root  string
+
+	// Form normal format
+	delimiter string
 }
 
-func NewOption() *Options {
-	return &Options{}
+func CreateOptions() *Options {
+	o := NewOptions()
+	o.Init()
+	o.Check()
+
+	return o
+}
+
+func NewOptions() *Options {
+	return &Options{
+		delimiter: " ",
+	}
 }
 
 func (o *Options) Init() {
