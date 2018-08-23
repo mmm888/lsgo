@@ -14,7 +14,7 @@ func NewOption() *Options {
 }
 
 func (o *Options) Init() {
-	//flag.BoolVar(&o.all, "a", false, "Include directory entries whose names begin with a dot (.).")
+	flag.BoolVar(&o.all, "a", false, "Include directory entries whose names begin with a dot (.).")
 	flag.BoolVar(&o.long, "l", false, "List in long format.")
 	flag.Parse()
 

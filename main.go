@@ -1,15 +1,39 @@
 package main
 
 import (
-	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
+	"os"
 	"strings"
+)
+
+const (
+	templateNormal = `
+{{- . }}
+`
+
+	templateLongFormat = `total {{ .Total }} 
+{{ range .List -}}
+{{ . }}
+{{ end -}}
+`
 )
 
 var (
 	delimiter = " "
+
+	tmpl *template.Template
 )
+
+type LF struct {
+	Total int
+	List  []string
+}
+
+func NewLF() *LF {
+	return &LF{}
+}
 
 func main() {
 	options := NewOption()
@@ -21,24 +45,39 @@ func main() {
 		log.Print("error1")
 	}
 
-	fList := make([]string, 0, 5)
-	for _, fInfo := range fInfos {
+	if options.long {
 
-		var info string
+		lf := NewLF()
+		tmpl = template.Must(template.New("long").Parse(templateLongFormat))
+		for _, fInfo := range fInfos {
 
-		// long format
-		if options.long {
-			// TODO: 改行コード
-			delimiter = "\n"
+			// Check hidden file
+			var name string
+			name = string(fInfo.Name()[0])
+			if name == "." {
+				continue
+			}
 
-			// total [total XX]
+			var info string
 			info = longFormat(fInfo)
-		} else {
-			info = fInfo.Name()
+			lf.List = append(lf.List, info)
+
+			var size int
+			size = getUsedBlockSize(fInfo)
+			lf.Total += size
 		}
+		tmpl.Execute(os.Stdout, lf)
 
-		fList = append(fList, info)
+	} else {
+		fList := make([]string, 0, 5)
+		tmpl = template.Must(template.New("normal").Parse(templateNormal))
+		for _, fInfo := range fInfos {
+
+			var info string
+			info = fInfo.Name()
+			fList = append(fList, info)
+		}
+		tmpl.Execute(os.Stdout, strings.Join(fList, delimiter))
+
 	}
-
-	fmt.Println(strings.Join(fList, delimiter))
 }

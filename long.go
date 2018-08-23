@@ -53,3 +53,7 @@ func longFormat(i os.FileInfo) string {
 
 	return fmt.Sprintf("%1s %2d %s %s %5d %s %s", fType, hardlink, owner, group, byteSize, timeStamp, name)
 }
+
+func getUsedBlockSize(i os.FileInfo) int {
+	return int(i.Sys().(*syscall.Stat_t).Blocks)
+}
