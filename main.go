@@ -59,7 +59,7 @@ func main() {
 			}
 
 			var info string
-			info = longFormat(fInfo)
+			info = longFormat(options, fInfo)
 			lf.List = append(lf.List, info)
 
 			var size int

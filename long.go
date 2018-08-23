@@ -25,6 +25,18 @@ func getGroupName(i os.FileInfo) string {
 	return g.Name
 }
 
+func getFileSize(h bool, i os.FileInfo) string {
+	var size string
+
+	if h {
+		size = fmt.Sprint(humanateBytes(uint64(i.Size())))
+	} else {
+		size = fmt.Sprint(i.Size())
+	}
+
+	return size
+}
+
 func getTimeStamp(i os.FileInfo) string {
 	// TODO: 1 年以上前の場合のフォーマット
 	return i.ModTime().Format("Jan 02 15:04")
@@ -42,16 +54,16 @@ func getFileName(i os.FileInfo) string {
 	return n
 }
 
-func longFormat(i os.FileInfo) string {
+func longFormat(o *Options, i os.FileInfo) string {
 	fType := i.Mode()
 	hardlink := getHardLinkCount(i)
 	owner := getUserName(i)
 	group := getGroupName(i)
-	byteSize := i.Size()
+	byteSize := getFileSize(o.human, i)
 	timeStamp := getTimeStamp(i)
 	name := getFileName(i)
 
-	return fmt.Sprintf("%1s %2d %s %s %5d %s %s", fType, hardlink, owner, group, byteSize, timeStamp, name)
+	return fmt.Sprintf("%1s %2d %s %s %5s %s %s", fType, hardlink, owner, group, byteSize, timeStamp, name)
 }
 
 func getUsedBlockSize(i os.FileInfo) int {

@@ -3,10 +3,11 @@ package main
 import "flag"
 
 type Options struct {
-	args []string
-	long bool
-	all  bool
-	root string
+	args  []string
+	long  bool
+	all   bool
+	human bool
+	root  string
 }
 
 func NewOption() *Options {
@@ -15,6 +16,7 @@ func NewOption() *Options {
 
 func (o *Options) Init() {
 	flag.BoolVar(&o.all, "a", false, "Include directory entries whose names begin with a dot (.).")
+	flag.BoolVar(&o.human, "h", false, "File size in human readable format.")
 	flag.BoolVar(&o.long, "l", false, "List in long format.")
 	flag.Parse()
 
