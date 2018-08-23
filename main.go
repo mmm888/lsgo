@@ -58,12 +58,14 @@ func main() {
 				continue
 			}
 
+			fi := NewFileInfo(fInfo)
+
 			var info string
-			info = longFormat(options, fInfo)
+			info = fi.LongFormat(options)
 			lf.List = append(lf.List, info)
 
 			var size int
-			size = getUsedBlockSize(fInfo)
+			size = fi.GetUsedBlockSize()
 			lf.Total += size
 		}
 		tmpl.Execute(os.Stdout, lf)
@@ -73,8 +75,15 @@ func main() {
 		tmpl = template.Must(template.New("normal").Parse(templateNormal))
 		for _, fInfo := range fInfos {
 
+			// Check hidden file
+			var name string
+			name = string(fInfo.Name()[0])
+			if name == "." {
+				continue
+			}
+
 			var info string
-			info = fInfo.Name()
+			info = getFileName(fInfo)
 			fList = append(fList, info)
 		}
 		tmpl.Execute(os.Stdout, strings.Join(fList, delimiter))
