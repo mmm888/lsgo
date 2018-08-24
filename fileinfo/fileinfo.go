@@ -1,4 +1,4 @@
-package main
+package fileinfo
 
 import (
 	"fmt"
@@ -6,6 +6,8 @@ import (
 	"os/user"
 	"syscall"
 	"time"
+
+	"github.com/mmm888/lsgo/option"
 )
 
 type FileInfo struct {
@@ -27,13 +29,13 @@ func NewFileInfo(fi os.FileInfo) *FileInfo {
 		group:         getGroupName(fi),
 		byteSize:      fi.Size(),
 		timeStamp:     fi.ModTime(),
-		fileName:      getFileName(fi),
+		fileName:      GetFileName(fi),
 		usedBlockSize: fi.Sys().(*syscall.Stat_t).Blocks,
 	}
 }
 
-func (f *FileInfo) LongFormat(o *Options) string {
-	return fmt.Sprintf("%1s %2d %s %s %5s %s %s", f.fileType, f.hardlinkNum, f.owner, f.group, f.getFileSize(o.human), f.getTimeStamp(), f.fileName)
+func (f *FileInfo) LongFormat(o *option.Options) string {
+	return fmt.Sprintf("%1s %2d %s %s %5s %s %s", f.fileType, f.hardlinkNum, f.owner, f.group, f.getFileSize(o.Human), f.getTimeStamp(), f.fileName)
 }
 
 func (f *FileInfo) GetUsedBlockSize() int {
@@ -71,7 +73,7 @@ func getGroupName(i os.FileInfo) string {
 	return g.Name
 }
 
-func getFileName(i os.FileInfo) string {
+func GetFileName(i os.FileInfo) string {
 	var n string
 
 	if i.IsDir() {

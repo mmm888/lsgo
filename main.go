@@ -1,51 +1,80 @@
 package main
 
 import (
-	"html/template"
+	"errors"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
+
+	"github.com/mmm888/lsgo/format"
+	"github.com/mmm888/lsgo/option"
 )
 
-const (
-	templateNormal = `
-{{- .Files }}
-`
+func getFileInfos(o *option.Options) ([]os.FileInfo, error) {
+	root := o.Root
+	isAll := o.All
 
-	templateLongFormat = `total {{ .Total }} 
-{{ range .List -}}
-{{ . }}
-{{ end -}}
-`
-)
+	f, err := os.Stat(root)
+	// Error: No Such file or directory
+	if err != nil {
+		msg := fmt.Sprintf("%s: No such file or directory", root)
+		return nil, errors.New(msg)
+	}
 
-var (
-	tmpl *template.Template
-)
+	var list []os.FileInfo
+	if f.IsDir() {
+		list = make([]os.FileInfo, 0, 10)
+
+		// Check current directory, parent directory
+		if isAll {
+			cd, _ := os.Stat(".")
+			pd, _ := os.Stat("..")
+			list = append(list, cd, pd)
+		}
+
+		fi, err := ioutil.ReadDir(root)
+		if err != nil {
+			return nil, err
+		}
+
+		if isAll {
+			list = append(list, fi...)
+		} else {
+			for _, i := range fi {
+
+				// Check hidden file
+				name := string(i.Name()[0])
+				if name == "." {
+					continue
+				}
+
+				list = append(list, i)
+			}
+		}
+
+	} else {
+		list = append(list, f)
+	}
+
+	return list, nil
+}
 
 func main() {
 
-	var options *Options
-	options = CreateOptions()
+	var options *option.Options
+	options = option.CreateOptions()
 
-	fInfos, err := ioutil.ReadDir(options.root)
+	fInfos, err := getFileInfos(options)
 	if err != nil {
-		log.Print("error1")
+		fmt.Fprint(os.Stderr, err)
 	}
 
-	if options.long {
-
-		lf := NewLongFormat(options)
-		lf.Execute(fInfos)
-		tmpl = template.Must(template.New("long").Parse(templateLongFormat))
-		tmpl.Execute(os.Stdout, lf)
-
+	var frt format.Format
+	if options.Long {
+		frt = format.NewLongFormat(options)
 	} else {
-
-		nf := NewNormalFormat(options)
-		nf.Execute(fInfos)
-		tmpl = template.Must(template.New("normal").Parse(templateNormal))
-		tmpl.Execute(os.Stdout, nf)
-
+		frt = format.NewNormalFormat(options)
 	}
+
+	frt.Execute(fInfos)
 }
