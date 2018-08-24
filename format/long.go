@@ -35,6 +35,9 @@ func (l *LongFormat) Execute(fInfos []os.FileInfo) error {
 
 	var err error
 
+	// Sort
+	sortList(l.options, fInfos)
+
 	for _, fInfo := range fInfos {
 
 		fi := fileinfo.NewFileInfo(fInfo)

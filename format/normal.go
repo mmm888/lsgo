@@ -36,6 +36,9 @@ func (n *NormalFormat) Execute(fInfos []os.FileInfo) error {
 
 	var err error
 
+	// Sort
+	sortList(n.options, fInfos)
+
 	for _, fInfo := range fInfos {
 
 		var info string

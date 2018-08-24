@@ -3,10 +3,12 @@ package option
 import "flag"
 
 type Options struct {
-	Long  bool
-	All   bool
-	Human bool
-	Root  string
+	All     bool
+	Human   bool
+	Long    bool
+	Reverse bool
+	Time    bool
+	Roots   []string
 
 	// Form normal format
 	Delimiter string
@@ -25,7 +27,7 @@ func CreateOptions() *Options {
 
 func NewOptions() *Options {
 	return &Options{
-		Root:      ".",
+		Roots:     []string{"."},
 		Delimiter: " ",
 	}
 }
@@ -34,6 +36,8 @@ func (o *Options) Init() {
 	flag.BoolVar(&o.All, "a", false, "Include directory entries whose names begin with a dot (.).")
 	flag.BoolVar(&o.Human, "h", false, "File size in human readable format.")
 	flag.BoolVar(&o.Long, "l", false, "List in long format.")
+	flag.BoolVar(&o.Reverse, "r", false, "Reverse the order of the sort.")
+	flag.BoolVar(&o.Time, "t", false, "Sort by time modified.")
 	flag.Parse()
 
 	o.Args = flag.Args()
@@ -41,6 +45,6 @@ func (o *Options) Init() {
 
 func (o *Options) Check() {
 	if len(o.Args) > 0 {
-		o.Root = o.Args[0]
+		o.Roots = o.Args
 	}
 }
