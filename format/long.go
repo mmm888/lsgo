@@ -30,8 +30,11 @@ func NewLongFormat(o *option.Options) *LongFormat {
 		options: o}
 }
 
-// template Execute
-func (l *LongFormat) Execute(fInfos []os.FileInfo) {
+// Execute template
+func (l *LongFormat) Execute(fInfos []os.FileInfo) error {
+
+	var err error
+
 	for _, fInfo := range fInfos {
 
 		fi := fileinfo.NewFileInfo(fInfo)
@@ -45,5 +48,9 @@ func (l *LongFormat) Execute(fInfos []os.FileInfo) {
 		l.Total += size
 	}
 
-	l.tmpl.Execute(os.Stdout, l)
+	err = l.tmpl.Execute(os.Stdout, l)
+	if err != nil {
+		return err
+	}
+	return nil
 }

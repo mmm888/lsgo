@@ -15,6 +15,7 @@ func getFileInfos(o *option.Options) ([]os.FileInfo, error) {
 	isAll := o.All
 
 	f, err := os.Stat(root)
+
 	// Error: No Such file or directory
 	if err != nil {
 		msg := fmt.Sprintf("%s: No such file or directory", root)
@@ -61,6 +62,8 @@ func getFileInfos(o *option.Options) ([]os.FileInfo, error) {
 
 func main() {
 
+	var err error
+
 	var options *option.Options
 	options = option.CreateOptions()
 
@@ -76,5 +79,8 @@ func main() {
 		frt = format.NewNormalFormat(options)
 	}
 
-	frt.Execute(fInfos)
+	err = frt.Execute(fInfos)
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+	}
 }

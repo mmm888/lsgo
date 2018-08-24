@@ -31,8 +31,11 @@ func NewNormalFormat(o *option.Options) *NormalFormat {
 	}
 }
 
-// template Execute
-func (n *NormalFormat) Execute(fInfos []os.FileInfo) {
+// Execute template
+func (n *NormalFormat) Execute(fInfos []os.FileInfo) error {
+
+	var err error
+
 	for _, fInfo := range fInfos {
 
 		var info string
@@ -41,5 +44,9 @@ func (n *NormalFormat) Execute(fInfos []os.FileInfo) {
 	}
 	n.Files = strings.Join(n.fList, n.options.Delimiter)
 
-	n.tmpl.Execute(os.Stdout, n)
+	err = n.tmpl.Execute(os.Stdout, n)
+	if err != nil {
+		return err
+	}
+	return nil
 }
