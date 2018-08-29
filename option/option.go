@@ -10,7 +10,7 @@ type Options struct {
 	Time    bool
 	Roots   []string
 
-	// Form normal format
+	// For normal format
 	Delimiter string
 
 	// TODO: rm

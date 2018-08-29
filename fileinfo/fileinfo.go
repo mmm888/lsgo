@@ -12,7 +12,7 @@ import (
 
 type FileInfo struct {
 	fileType      os.FileMode
-	hardlinkNum   uint16
+	hardlinkNum   uint64
 	owner         string
 	group         string
 	byteSize      int64
