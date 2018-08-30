@@ -1,5 +1,7 @@
 /*
 db を別パッケージにして、interface として利用
+directory 以下のログファイルを全て add
+long_l/server300/app.log > eclipse...
 */
 
 package main
@@ -8,26 +10,13 @@ import (
 	"bufio"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
-)
-
-const (
-	timeFormat = "2006-01-02T15:04:05Z0700"
-	splitDel   = " "
-	splitNum   = 5
-)
-
-var (
-	dbPath  string
-	dbName  string
-	logFile string
+	"github.com/urfave/cli"
 )
 
 type logFormat struct {
@@ -40,10 +29,10 @@ type logFormat struct {
 }
 
 func (l *logFormat) GetAllText() string {
-	return fmt.Sprintf("%s %s [%s] [%s] %s", l.Time.Format(timeFormat), l.LogLevel, l.Host, l.Actor, l.Message)
+	return fmt.Sprintf("%s %s [%s] [%s] %s", l.Time.Format(logTimeFormat), l.LogLevel, l.Host, l.Actor, l.Message)
 }
 
-// parse `resource metric {CPU: 0.090}`
+// parse `resource metric {CPU: 0.090}` > 0.090
 func (l *logFormat) parseCPUUsage() error {
 
 	var err error
@@ -73,7 +62,7 @@ func (l *logFormat) parseCPUUsage() error {
 func (l *logFormat) insertDB(stmt *sql.Stmt) error {
 
 	// at, loglevel, host, cpu usage, all text
-	_, err := stmt.Exec(l.Time.Format("2006-01-02 03:04:05"), l.LogLevel, l.Host, l.CPU, l.GetAllText())
+	_, err := stmt.Exec(l.Time.Format(showTimeFormat), l.LogLevel, l.Host, l.CPU, l.GetAllText())
 	if err != nil {
 		return err
 	}
@@ -81,18 +70,20 @@ func (l *logFormat) insertDB(stmt *sql.Stmt) error {
 	return nil
 }
 
+// parse `2018-04-01T00:00:00.094+0900 INFO [server107] [mesos-resource-actor] resource metric {CPU: 0.090}`
+// > 2018-04-01T00:00:00.094+0900, INFO, server107, mesos-resource-actor, resource metric {CPU: 0.090}
 func parseLine(line string) (*logFormat, error) {
 
 	var l *logFormat
 	var err error
 
-	seps := strings.SplitN(line, splitDel, splitNum)
+	seps := strings.SplitN(line, " ", 5)
 
 	for i := range seps {
 		seps[i] = strings.Trim(seps[i], "[]")
 	}
 
-	t, err := time.Parse(timeFormat, seps[0])
+	t, err := time.Parse(logTimeFormat, seps[0])
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +108,7 @@ func setErr(err1, err2 error) error {
 	return err2
 }
 
-func fromFiletoDB(db *sql.DB, fp string) error {
+func fromFiletoDB(db *sql.DB, dbName, fp string) error {
 	f, err := os.Open(fp)
 	if err != nil {
 		return err
@@ -128,7 +119,8 @@ func fromFiletoDB(db *sql.DB, fp string) error {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare("insert into test (at, loglevel, host, cpu, alltext) values (?,?,?,?,?)")
+	query := fmt.Sprintf("insert into %s (at, loglevel, host, cpu, alltext) values (?,?,?,?,?)", dbName)
+	stmt, err := tx.Prepare(query)
 	if err != nil {
 		return err
 	}
@@ -166,57 +158,23 @@ func fromFiletoDB(db *sql.DB, fp string) error {
 	return nil
 }
 
-func initDB() (*sql.DB, error) {
-	os.Remove(dbPath)
-
-	db, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		return nil, err
-	}
-
-	/*
-		sqlStmt := `
-		create table foo (id integer not null primary key, name text);
-		delete from foo;
-		`
-	*/
-
-	sqlStmt := fmt.Sprintf(`
-	create table %s (at datetime, loglevel text, host text, cpu float, alltext text);
-	delete from %s;
-	`, dbName, dbName)
-
-	_, err = db.Exec(sqlStmt)
-	if err != nil {
-		log.Printf("%q: %s\n", err, sqlStmt)
-		return nil, err
-	}
-
-	return db, nil
-}
-
-func getFileNameWithoutExt(path string) string {
-	return filepath.Base(path[:len(path)-len(filepath.Ext(path))])
-}
-
-func Add(f, d string) error {
+func Add(c *cli.Context) error {
 	var err error
 
-	logFile = f
-	dbPath = d
-	dbName = getFileNameWithoutExt(d)
+	logFile := c.String("f")
+	dbPath := c.String("d")
+	dbName := getFileNameWithoutExt(dbPath)
 
-	db, err := initDB()
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
 
-	err = fromFiletoDB(db, logFile)
+	err = fromFiletoDB(db, dbName, logFile)
 	if err != nil {
 		return err
 	}
 
-	log.Print("Complete")
 	return nil
 }

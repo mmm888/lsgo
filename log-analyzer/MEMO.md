@@ -4,6 +4,8 @@
 
 https://github.com/pfnet/intern-coding-tasks/tree/master/2018/be
 
+* Download log file
+
 ```bash
 mkdir log
 cd log
@@ -13,3 +15,10 @@ unzip log_s.zip
 unzip log_l.zip
 ```
 
+* Insert data
+
+```bash
+make build
+./bin/log-analyzer clean
+LOGDIR="./log/log_s"; for i in $(ls $LOGDIR); do for j in $(ls $LOGDIR/$i); do ./bin/log-analyzer add -f $LOGDIR/$i/$j; done; done
+```

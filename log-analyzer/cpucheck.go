@@ -3,44 +3,50 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
+
+	"github.com/urfave/cli"
 )
 
-func getCheckCPU(db *sql.DB, cpu float64) error {
+type checkCPU struct {
+	Time time.Time
+	Host string
+}
+
+func getCheckCPU(db *sql.DB, dbName string, cpu float64) ([]checkCPU, error) {
+
+	cs := make([]checkCPU, 0, 100)
 
 	query := fmt.Sprintf("select at, host from %s where cpu > %f", dbName, cpu)
-	fmt.Println(query)
 	rows, err := db.Query(query)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var t time.Time
-		var host string
-		err = rows.Scan(&t, &host)
+		var c checkCPU
+		err = rows.Scan(&c.Time, &c.Host)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		fmt.Println(t.Format("2006-01-02 03:04:05"), host)
+
+		cs = append(cs, c)
+		//fmt.Println(c.Time.Format(showTimeFormat), c.Host)
 	}
 	err = rows.Err()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return cs, nil
 }
 
-func CPUCheck(f, d string, c int) error {
+func CPUCheck(c *cli.Context) error {
 
-	logFile = f
-	dbPath = d
-	dbName = getFileNameWithoutExt(d)
-
-	cpu := float64(c) / 100
+	dbPath := c.String("d")
+	dbName := getFileNameWithoutExt(dbPath)
+	cpu := float64(c.Int("c")) / 100
 
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -48,11 +54,18 @@ func CPUCheck(f, d string, c int) error {
 	}
 	defer db.Close()
 
-	err = getCheckCPU(db, cpu)
+	cs, err := getCheckCPU(db, dbName, cpu)
 	if err != nil {
 		return err
 	}
 
-	log.Print("Complete")
+	if len(cs) == 0 {
+		fmt.Println("Nothing")
+	} else {
+		for i := range cs {
+			fmt.Println(cs[i].Time.Format(showTimeFormat), cs[i].Host)
+		}
+	}
+
 	return nil
 }
