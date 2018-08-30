@@ -1,3 +1,7 @@
+/*
+db を別パッケージにして、interface として利用
+*/
+
 package main
 
 import (
@@ -6,6 +10,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,13 +19,15 @@ import (
 )
 
 const (
-	dbPath  = "./test.db"
-	dbname  = "test"
-	logFile = "./log_s/server100/app.log"
-
 	timeFormat = "2006-01-02T15:04:05Z0700"
 	splitDel   = " "
 	splitNum   = 5
+)
+
+var (
+	dbPath  string
+	dbName  string
+	logFile string
 )
 
 type logFormat struct {
@@ -28,6 +36,49 @@ type logFormat struct {
 	Host     string
 	Actor    string
 	Message  string
+	CPU      float64
+}
+
+func (l *logFormat) GetAllText() string {
+	return fmt.Sprintf("%s %s [%s] [%s] %s", l.Time.Format(timeFormat), l.LogLevel, l.Host, l.Actor, l.Message)
+}
+
+// parse `resource metric {CPU: 0.090}`
+func (l *logFormat) parseCPUUsage() error {
+
+	var err error
+	HeadMessage := "resource metric"
+	TrimSymbol := " {}"
+	CPUMessage := "CPU: "
+
+	m := l.Message
+
+	if !strings.HasPrefix(m, HeadMessage) {
+		l.CPU = 0
+		return nil
+	}
+
+	m = strings.TrimPrefix(m, HeadMessage)
+	m = strings.Trim(m, TrimSymbol)
+	m = strings.TrimPrefix(m, CPUMessage)
+
+	l.CPU, err = strconv.ParseFloat(m, 64)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (l *logFormat) insertDB(stmt *sql.Stmt) error {
+
+	// at, loglevel, host, cpu usage, all text
+	_, err := stmt.Exec(l.Time.Format("2006-01-02 03:04:05"), l.LogLevel, l.Host, l.CPU, l.GetAllText())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func parseLine(line string) (*logFormat, error) {
@@ -57,16 +108,6 @@ func parseLine(line string) (*logFormat, error) {
 	return l, nil
 }
 
-func insertDB(stmt *sql.Stmt, l *logFormat) error {
-
-	_, err := stmt.Exec(l.Time.Format("2006-01-02 03:04:05"), l.LogLevel, l.Host, l.Actor, l.Message)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // if err1 is not nil, return err1. else, return err2.
 func setErr(err1, err2 error) error {
 	if err1 != nil {
@@ -87,7 +128,7 @@ func fromFiletoDB(db *sql.DB, fp string) error {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare("insert into test (at,loglevel,host,actor,message) values (?,?,?,?,?)")
+	stmt, err := tx.Prepare("insert into test (at, loglevel, host, cpu, alltext) values (?,?,?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -101,7 +142,10 @@ func fromFiletoDB(db *sql.DB, fp string) error {
 		l, err := parseLine(scanner.Text())
 		errHandler = setErr(errHandler, err)
 
-		err = insertDB(stmt, l)
+		err = l.parseCPUUsage()
+		errHandler = setErr(errHandler, err)
+
+		err = l.insertDB(stmt)
 		errHandler = setErr(errHandler, err)
 	}
 
@@ -138,9 +182,9 @@ func initDB() (*sql.DB, error) {
 	*/
 
 	sqlStmt := fmt.Sprintf(`
-	create table %s (at datetime, loglevel text, host text, actor text, message text);
+	create table %s (at datetime, loglevel text, host text, cpu float, alltext text);
 	delete from %s;
-	`, dbname, dbname)
+	`, dbName, dbName)
 
 	_, err = db.Exec(sqlStmt)
 	if err != nil {
@@ -151,19 +195,28 @@ func initDB() (*sql.DB, error) {
 	return db, nil
 }
 
-func Add() {
+func getFileNameWithoutExt(path string) string {
+	return filepath.Base(path[:len(path)-len(filepath.Ext(path))])
+}
+
+func Add(f, d string) error {
 	var err error
+
+	logFile = f
+	dbPath = d
+	dbName = getFileNameWithoutExt(d)
 
 	db, err := initDB()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer db.Close()
 
 	err = fromFiletoDB(db, logFile)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	log.Print("Complete")
+	return nil
 }
