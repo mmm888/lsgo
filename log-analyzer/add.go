@@ -1,7 +1,7 @@
 /*
 db を別パッケージにして、interface として利用
 directory 以下のログファイルを全て add
-long_l/server300/app.log > eclipse...
+Error: long_l/server300/app.log > eclipse...
 */
 
 package main

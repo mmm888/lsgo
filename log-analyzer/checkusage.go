@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"time"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/urfave/cli"
 )
 
-type checkCPU struct {
+type checkUsage struct {
 	Time time.Time
 	Host string
 }
 
-func getCheckCPU(db *sql.DB, dbName string, cpu float64) ([]checkCPU, error) {
+func getCheckUsage(db *sql.DB, dbName string, cpu float64) ([]checkUsage, error) {
 
-	cs := make([]checkCPU, 0, 100)
+	cs := make([]checkUsage, 0, 100)
 
 	query := fmt.Sprintf("select at, host from %s where cpu > %f", dbName, cpu)
 	rows, err := db.Query(query)
@@ -25,14 +26,13 @@ func getCheckCPU(db *sql.DB, dbName string, cpu float64) ([]checkCPU, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var c checkCPU
+		var c checkUsage
 		err = rows.Scan(&c.Time, &c.Host)
 		if err != nil {
 			return nil, err
 		}
 
 		cs = append(cs, c)
-		//fmt.Println(c.Time.Format(showTimeFormat), c.Host)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -42,7 +42,7 @@ func getCheckCPU(db *sql.DB, dbName string, cpu float64) ([]checkCPU, error) {
 	return cs, nil
 }
 
-func CPUCheck(c *cli.Context) error {
+func CheckUsage(c *cli.Context) error {
 
 	dbPath := c.String("d")
 	dbName := getFileNameWithoutExt(dbPath)
@@ -54,7 +54,7 @@ func CPUCheck(c *cli.Context) error {
 	}
 	defer db.Close()
 
-	cs, err := getCheckCPU(db, dbName, cpu)
+	cs, err := getCheckUsage(db, dbName, cpu)
 	if err != nil {
 		return err
 	}

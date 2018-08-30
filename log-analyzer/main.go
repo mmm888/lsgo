@@ -11,7 +11,7 @@ import (
 
 const (
 	logTimeFormat  = "2006-01-02T15:04:05Z0700"
-	showTimeFormat = "2006-01-02 03:04:05"
+	showTimeFormat = "2006-01-02 15:04:05"
 )
 
 func getFileNameWithoutExt(path string) string {
@@ -74,10 +74,10 @@ func main() {
 		},
 
 		{
-			Name:  "cpucheck",
+			Name:  "checkusage",
 			Usage: "Check threshold of CPU usage.",
 			Action: func(c *cli.Context) error {
-				err := CPUCheck(c)
+				err := CheckUsage(c)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -93,6 +93,49 @@ func main() {
 				cli.IntFlag{
 					Name:  "cpu, c",
 					Value: 95,
+				},
+			},
+		},
+
+		{
+			Name:  "showloadavg",
+			Usage: "Show CPU load average.",
+			Action: func(c *cli.Context) error {
+				err := ShowLoadAverage(c)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name: "db, d",
+					//Value: "test.db",
+					Value: "test.db",
+				},
+				cli.IntFlag{
+					Name:  "medians, m",
+					Value: 5,
+				},
+			},
+		},
+
+		{
+			Name:  "plot",
+			Usage: "Plot CPU load average.",
+			Action: func(c *cli.Context) error {
+				err := PlotLoadAverage(c)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "file, f",
+					Value: "test.csv",
 				},
 			},
 		},

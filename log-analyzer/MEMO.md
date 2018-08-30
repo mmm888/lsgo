@@ -20,5 +20,12 @@ unzip log_l.zip
 ```bash
 make build
 ./bin/log-analyzer clean
-LOGDIR="./log/log_s"; for i in $(ls $LOGDIR); do for j in $(ls $LOGDIR/$i); do ./bin/log-analyzer add -f $LOGDIR/$i/$j; done; done
+LOGDIR="./log/log_s"; for i in $(ls $LOGDIR); do for j in $(ls $LOGDIR/$i); do echo $LOGDIR/$i/$j; ./bin/log-analyzer add -f $LOGDIR/$i/$j; done; done
+```
+
+* Plot data
+
+```bash
+./bin/log-analyzer showloadavg > test.csv
+./bin/log-analyzer plot -f test.csv
 ```
