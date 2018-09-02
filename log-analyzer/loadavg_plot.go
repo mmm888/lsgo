@@ -120,24 +120,61 @@ func plotLoadAvg(pds []plotData, fp string) error {
 	return err
 }
 
-func PlotLoadAverage(c *cli.Context) error {
+func LoadAvgPlot(c *cli.Context) error {
 
-	var err error
+	/*
+		var err error
 
-	dataFile := c.String("f")
-	plotFile := "test.png"
+		dbPath := c.GlobalString("d")
+		dbName := getFileNameWithoutExt(dbPath)
+		medians := c.GlobalInt("m")
+		plotFile := c.String("o")
 
-	pds, err := fromFiletoPlotData(dataFile)
-	if err != nil {
-		return err
-	}
+				p, err := NewPlotLoadAverages()
+				if err != nil {
+					return err
+				}
 
-	err = plotLoadAvg(pds, plotFile)
-	if err != nil {
-		return err
-	}
+			pds, err := fromFiletoPlotData(dataFile)
+			if err != nil {
+				return err
+			}
 
-	fmt.Println("Completed")
+			err = plotLoadAvg(pds, plotFile)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("Completed")
+
+			return nil
+
+			dbPath := c.String("d")
+			dbName := getFileNameWithoutExt(dbPath)
+			medians := c.Int("m")
+
+			db, err := sql.Open("sqlite3", dbPath)
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+
+			var s LoadAverage
+			s, err = NewShowLoadAvarages(db, dbName, medians)
+			if err != nil {
+				return err
+			}
+
+			err = s.GetData()
+			if err != nil {
+				return err
+			}
+
+			err = s.Output()
+			if err != nil {
+				return err
+			}
+	*/
 
 	return nil
 }

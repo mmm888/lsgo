@@ -2,6 +2,8 @@
 db を別パッケージにして、interface として利用
 directory 以下のログファイルを全て add
 Error: long_l/server300/app.log > eclipse...
+log メッセージの管理
+test
 */
 
 package main
@@ -158,11 +160,11 @@ func fromFiletoDB(db *sql.DB, dbName, fp string) error {
 	return nil
 }
 
-func Add(c *cli.Context) error {
+func AddLogFile(c *cli.Context) error {
 	var err error
 
 	logFile := c.String("f")
-	dbPath := c.String("d")
+	dbPath := c.GlobalString("d")
 	dbName := getFileNameWithoutExt(dbPath)
 
 	db, err := sql.Open("sqlite3", dbPath)

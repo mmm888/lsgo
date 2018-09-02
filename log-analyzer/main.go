@@ -27,23 +27,45 @@ func main() {
 	// command action
 	app.Commands = []cli.Command{
 		{
-			Name:  "add",
-			Usage: "Insert data from log file to DB.",
-			Action: func(c *cli.Context) error {
-				err := Add(c)
-				if err != nil {
-					log.Fatal(err)
-				}
+			Name:    "add",
+			Aliases: []string{"a"},
+			Usage:   "Insert data to DB.",
+			Subcommands: []cli.Command{
+				{
+					Name:  "logfile",
+					Usage: "Insert data from log file.",
+					Action: func(c *cli.Context) error {
+						err := AddLogFile(c)
+						if err != nil {
+							log.Fatal(err)
+						}
 
-				fmt.Println("Completed")
-				return nil
+						fmt.Println("Completed")
+						return nil
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name: "file, f",
+							//Value: "app.log",
+							Value: "log/log_s/server100/app.log",
+						},
+					},
+				},
+				{
+					Name:  "loadavg",
+					Usage: "Insert data of load average.",
+					Action: func(c *cli.Context) error {
+						err := AddLoadAvg(c)
+						if err != nil {
+							log.Fatal(err)
+						}
+
+						fmt.Println("Completed")
+						return nil
+					},
+				},
 			},
 			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name: "file, f",
-					//Value: "app.log",
-					Value: "log/log_s/server100/app.log",
-				},
 				cli.StringFlag{
 					Name: "db, d",
 					//Value: "test.db",
@@ -74,10 +96,10 @@ func main() {
 		},
 
 		{
-			Name:  "checkusage",
-			Usage: "Check threshold of CPU usage.",
+			Name:  "cpuusage",
+			Usage: "Show threshold of CPU usage.",
 			Action: func(c *cli.Context) error {
-				err := CheckUsage(c)
+				err := CPUUsage(c)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -98,15 +120,40 @@ func main() {
 		},
 
 		{
-			Name:  "showloadavg",
-			Usage: "Show CPU load average.",
-			Action: func(c *cli.Context) error {
-				err := ShowLoadAverage(c)
-				if err != nil {
-					log.Fatal(err)
-				}
+			Name:    "loadavg",
+			Aliases: []string{"l"},
+			Usage:   "CPU load average",
+			Subcommands: []cli.Command{
+				{
+					Name:  "show",
+					Usage: "Show CPU load average.",
+					Action: func(c *cli.Context) error {
+						err := LoadAvgShow(c)
+						if err != nil {
+							log.Fatal(err)
+						}
 
-				return nil
+						return nil
+					},
+				},
+				{
+					Name:  "plot",
+					Usage: "Plot CPU load average.",
+					Action: func(c *cli.Context) error {
+						err := LoadAvgPlot(c)
+						if err != nil {
+							log.Fatal(err)
+						}
+
+						return nil
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "output, o",
+							Value: "test.png",
+						},
+					},
+				},
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
@@ -117,25 +164,6 @@ func main() {
 				cli.IntFlag{
 					Name:  "medians, m",
 					Value: 5,
-				},
-			},
-		},
-
-		{
-			Name:  "plot",
-			Usage: "Plot CPU load average.",
-			Action: func(c *cli.Context) error {
-				err := PlotLoadAverage(c)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				return nil
-			},
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "file, f",
-					Value: "test.csv",
 				},
 			},
 		},

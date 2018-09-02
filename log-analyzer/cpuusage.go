@@ -14,7 +14,7 @@ type checkUsage struct {
 	Host string
 }
 
-func getCheckUsage(db *sql.DB, dbName string, cpu float64) ([]checkUsage, error) {
+func getCPUUsage(db *sql.DB, dbName string, cpu float64) ([]checkUsage, error) {
 
 	cs := make([]checkUsage, 0, 100)
 
@@ -42,7 +42,7 @@ func getCheckUsage(db *sql.DB, dbName string, cpu float64) ([]checkUsage, error)
 	return cs, nil
 }
 
-func CheckUsage(c *cli.Context) error {
+func CPUUsage(c *cli.Context) error {
 
 	dbPath := c.String("d")
 	dbName := getFileNameWithoutExt(dbPath)
@@ -54,7 +54,7 @@ func CheckUsage(c *cli.Context) error {
 	}
 	defer db.Close()
 
-	cs, err := getCheckUsage(db, dbName, cpu)
+	cs, err := getCPUUsage(db, dbName, cpu)
 	if err != nil {
 		return err
 	}
