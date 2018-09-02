@@ -1,15 +1,12 @@
 package main
 
 import (
-	"bufio"
+	"database/sql"
 	"fmt"
-	"os"
-	"strconv"
-	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-	chart "github.com/wcharczuk/go-chart"
 )
 
 type plotData struct {
@@ -18,6 +15,7 @@ type plotData struct {
 	LoadAverage float64
 }
 
+/*
 func fromFiletoPlotData(fp string) ([]plotData, error) {
 	f, err := os.Open(fp)
 	if err != nil {
@@ -45,136 +43,34 @@ func fromFiletoPlotData(fp string) ([]plotData, error) {
 
 	return pds, nil
 }
-
-func valueFormatter(v interface{}) string {
-	dateFormat := "01-02 15:04"
-
-	if typed, isTyped := v.(time.Time); isTyped {
-		return typed.Format(dateFormat)
-	}
-	if typed, isTyped := v.(int64); isTyped {
-		return time.Unix(0, typed).Format(dateFormat)
-	}
-	if typed, isTyped := v.(float64); isTyped {
-		return time.Unix(0, int64(typed)).Format(dateFormat)
-	}
-	return ""
-}
-
-func plotLoadAvg(pds []plotData, fp string) error {
-
-	numSeries := 1
-	numValues := len(pds)
-
-	series := make([]chart.Series, numSeries)
-
-	for i := 0; i < numSeries; i++ {
-
-		xValues := make([]time.Time, numValues)
-		yValues := make([]float64, numValues)
-
-		for j := 0; j < numValues; j++ {
-			xValues[j] = pds[j].Time
-			yValues[j] = pds[j].LoadAverage
-		}
-
-		series[i] = chart.TimeSeries{
-			Name:    fmt.Sprintf("%s.value", pds[i].Host),
-			XValues: xValues,
-			YValues: yValues,
-		}
-	}
-
-	graph := chart.Chart{
-		XAxis: chart.XAxis{
-			Name:           "Time",
-			NameStyle:      chart.StyleShow(),
-			Style:          chart.StyleShow(),
-			ValueFormatter: valueFormatter,
-		},
-		YAxis: chart.YAxis{
-			Name:      "Load Average",
-			NameStyle: chart.StyleShow(),
-			Style:     chart.StyleShow(),
-		},
-		Background: chart.Style{
-			Padding: chart.Box{
-				Top:  20,
-				Left: 20,
-			},
-		},
-		Series: series,
-	}
-
-	graph.Elements = []chart.Renderable{
-		chart.Legend(&graph),
-	}
-
-	f, err := os.Create(fp)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	graph.Render(chart.PNG, f)
-	return err
-}
+*/
 
 func LoadAvgPlot(c *cli.Context) error {
 
-	/*
-		var err error
+	dbPath := c.GlobalString("d")
+	dbName := getFileNameWithoutExt(dbPath)
+	tableName := fmt.Sprintf("%s_%s", dbName, loadavgTableName)
+	median := c.GlobalInt("m")
+	output := c.String("o")
 
-		dbPath := c.GlobalString("d")
-		dbName := getFileNameWithoutExt(dbPath)
-		medians := c.GlobalInt("m")
-		plotFile := c.String("o")
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		return errors.Wrap(err, "Error1: ")
+	}
+	defer db.Close()
 
-				p, err := NewPlotLoadAverages()
-				if err != nil {
-					return err
-				}
+	var s LoadAverage
+	s = NewPlotLoadAverages(db, tableName, median, output)
 
-			pds, err := fromFiletoPlotData(dataFile)
-			if err != nil {
-				return err
-			}
+	err = s.GetData()
+	if err != nil {
+		return errors.Wrap(err, "Error2: ")
+	}
 
-			err = plotLoadAvg(pds, plotFile)
-			if err != nil {
-				return err
-			}
-
-			fmt.Println("Completed")
-
-			return nil
-
-			dbPath := c.String("d")
-			dbName := getFileNameWithoutExt(dbPath)
-			medians := c.Int("m")
-
-			db, err := sql.Open("sqlite3", dbPath)
-			if err != nil {
-				return err
-			}
-			defer db.Close()
-
-			var s LoadAverage
-			s, err = NewShowLoadAvarages(db, dbName, medians)
-			if err != nil {
-				return err
-			}
-
-			err = s.GetData()
-			if err != nil {
-				return err
-			}
-
-			err = s.Output()
-			if err != nil {
-				return err
-			}
-	*/
+	err = s.Output()
+	if err != nil {
+		return errors.Wrap(err, "Error3: ")
+	}
 
 	return nil
 }

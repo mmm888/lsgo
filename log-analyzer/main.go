@@ -63,6 +63,12 @@ func main() {
 						fmt.Println("Completed")
 						return nil
 					},
+					Flags: []cli.Flag{
+						cli.IntFlag{
+							Name:  "median, m",
+							Value: 5,
+						},
+					},
 				},
 			},
 			Flags: []cli.Flag{
@@ -162,7 +168,7 @@ func main() {
 					Value: "test.db",
 				},
 				cli.IntFlag{
-					Name:  "medians, m",
+					Name:  "median, m",
 					Value: 5,
 				},
 			},

@@ -14,11 +14,11 @@ type checkUsage struct {
 	Host string
 }
 
-func getCPUUsage(db *sql.DB, dbName string, cpu float64) ([]checkUsage, error) {
+func getCPUUsage(db *sql.DB, table string, cpu float64) ([]checkUsage, error) {
 
 	cs := make([]checkUsage, 0, 100)
 
-	query := fmt.Sprintf("select at, host from %s where cpu > %f", dbName, cpu)
+	query := fmt.Sprintf("select at, host from %s where cpu > %f", table, cpu)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, nil
@@ -46,6 +46,8 @@ func CPUUsage(c *cli.Context) error {
 
 	dbPath := c.String("d")
 	dbName := getFileNameWithoutExt(dbPath)
+	tableName := fmt.Sprintf("%s_%s", dbName, logfileTableName)
+
 	cpu := float64(c.Int("c")) / 100
 
 	db, err := sql.Open("sqlite3", dbPath)
@@ -54,7 +56,7 @@ func CPUUsage(c *cli.Context) error {
 	}
 	defer db.Close()
 
-	cs, err := getCPUUsage(db, dbName, cpu)
+	cs, err := getCPUUsage(db, tableName, cpu)
 	if err != nil {
 		return err
 	}

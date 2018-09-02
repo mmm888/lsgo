@@ -1,8 +1,6 @@
 /*
-db を別パッケージにして、interface として利用
 directory 以下のログファイルを全て add
 Error: long_l/server300/app.log > eclipse...
-log メッセージの管理
 test
 */
 
@@ -18,7 +16,12 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/pkg/errors"
 	"github.com/urfave/cli"
+)
+
+const (
+	logfileTableName = "logfile"
 )
 
 type logFormat struct {
@@ -101,16 +104,7 @@ func parseLine(line string) (*logFormat, error) {
 	return l, nil
 }
 
-// if err1 is not nil, return err1. else, return err2.
-func setErr(err1, err2 error) error {
-	if err1 != nil {
-		return err1
-	}
-
-	return err2
-}
-
-func fromFiletoDB(db *sql.DB, dbName, fp string) error {
+func fromFiletoDB(db *sql.DB, table, fp string) error {
 	f, err := os.Open(fp)
 	if err != nil {
 		return err
@@ -121,7 +115,7 @@ func fromFiletoDB(db *sql.DB, dbName, fp string) error {
 	if err != nil {
 		return err
 	}
-	query := fmt.Sprintf("insert into %s (at, loglevel, host, cpu, alltext) values (?,?,?,?,?)", dbName)
+	query := fmt.Sprintf("insert into %s (at, loglevel, host, cpu, alltext) values (?,?,?,?,?)", table)
 	stmt, err := tx.Prepare(query)
 	if err != nil {
 		return err
@@ -166,16 +160,17 @@ func AddLogFile(c *cli.Context) error {
 	logFile := c.String("f")
 	dbPath := c.GlobalString("d")
 	dbName := getFileNameWithoutExt(dbPath)
+	tableName := fmt.Sprintf("%s_%s", dbName, logfileTableName)
 
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Error1: ")
 	}
 	defer db.Close()
 
-	err = fromFiletoDB(db, dbName, logFile)
+	err = fromFiletoDB(db, tableName, logFile)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Error2: ")
 	}
 
 	return nil

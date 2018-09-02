@@ -4,75 +4,50 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"sync"
-	"time"
 )
 
-type laData struct {
-	Start       time.Time
-	End         time.Time
-	LoadAverage float64
-	Host        string
-}
-
 type showLoadAvarages struct {
-	medians int
-	avgs    map[string][]laData
-
+	avgs   map[string][]laData
+	median int
 	db     *sql.DB
-	dbName string
+	table  string
 }
 
-func NewShowLoadAvarages(db *sql.DB, dbName string, medians int) (*showLoadAvarages, error) {
-
-	s, e, hs, err := getCommonData(db, dbName, medians)
-	if err != nil {
-		return nil, err
-	}
-
-	// 1分で近似値を返す
-	s = s.Round(time.Minute)
-	e = e.Round(time.Minute)
-
-	var wg sync.WaitGroup
-	avgs := make(map[string][]laData)
-	for i := range hs {
-		host := hs[i]
-		wg.Add(1)
-		go func() {
-			a, err := getLoadAverageFromDB(s, e, db, dbName, medians, host)
-			defer wg.Done()
-			if err != nil {
-				log.Print(err)
-			}
-			avgs[host] = a
-		}()
-	}
-	wg.Wait()
-
+func NewShowLoadAvarages(db *sql.DB, table string, median int) *showLoadAvarages {
 	return &showLoadAvarages{
-		avgs:    avgs,
-		medians: medians,
-
+		avgs:   make(map[string][]laData),
+		median: median,
 		db:     db,
-		dbName: dbName,
-	}, nil
+		table:  table,
+	}
 }
 
 func (ss *showLoadAvarages) GetData() error {
+	var err error
+	var query string
 
-	/*
-		var err error
-		var query string
+	query = fmt.Sprintf("select start, host, loadavg from %s where median = %d", ss.table, ss.median)
+	log.Print(query)
+	rows, err := ss.db.Query(query)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
 
-		// すべての host について
-		for i := range ss.hosts {
-			host := ss.hosts[i]
-
-			getLoadAverageFromDB(ss, host)
-
+	for rows.Next() {
+		var la laData
+		err = rows.Scan(&la.Start, &la.Host, &la.LoadAverage)
+		if err != nil {
+			return err
 		}
-	*/
+
+		ss.avgs[la.Host] = append(ss.avgs[la.Host], la)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
