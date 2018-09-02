@@ -1,10 +1,11 @@
-package main
+package cli
 
 import (
 	"database/sql"
 	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/mmm888/mycmd/log-analyzer/loadaverage"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 )
@@ -22,8 +23,8 @@ func LoadAvgShow(c *cli.Context) error {
 	}
 	defer db.Close()
 
-	var s LoadAverage
-	s = NewShowLoadAvarages(db, tableName, median)
+	var s loadaverage.LoadAverage
+	s = loadaverage.NewShowLoadAvarages(db, tableName, median)
 
 	err = s.GetData()
 	if err != nil {

@@ -4,19 +4,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
+	mycli "github.com/mmm888/mycmd/log-analyzer/cli"
 	"github.com/urfave/cli"
 )
-
-const (
-	logTimeFormat  = "2006-01-02T15:04:05Z0700"
-	showTimeFormat = "2006-01-02 15:04:05"
-)
-
-func getFileNameWithoutExt(path string) string {
-	return filepath.Base(path[:len(path)-len(filepath.Ext(path))])
-}
 
 func main() {
 	app := cli.NewApp()
@@ -35,7 +26,7 @@ func main() {
 					Name:  "logfile",
 					Usage: "Insert data from log file.",
 					Action: func(c *cli.Context) error {
-						err := AddLogFile(c)
+						err := mycli.AddLogFile(c)
 						if err != nil {
 							log.Fatal(err)
 						}
@@ -55,7 +46,7 @@ func main() {
 					Name:  "loadavg",
 					Usage: "Insert data of load average.",
 					Action: func(c *cli.Context) error {
-						err := AddLoadAvg(c)
+						err := mycli.AddLoadAvg(c)
 						if err != nil {
 							log.Fatal(err)
 						}
@@ -84,7 +75,7 @@ func main() {
 			Name:  "clean",
 			Usage: "Reset DB data.",
 			Action: func(c *cli.Context) error {
-				err := Clean(c)
+				err := mycli.Clean(c)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -105,7 +96,7 @@ func main() {
 			Name:  "cpuusage",
 			Usage: "Show threshold of CPU usage.",
 			Action: func(c *cli.Context) error {
-				err := CPUUsage(c)
+				err := mycli.CPUUsage(c)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -134,7 +125,7 @@ func main() {
 					Name:  "show",
 					Usage: "Show CPU load average.",
 					Action: func(c *cli.Context) error {
-						err := LoadAvgShow(c)
+						err := mycli.LoadAvgShow(c)
 						if err != nil {
 							log.Fatal(err)
 						}
@@ -146,7 +137,7 @@ func main() {
 					Name:  "plot",
 					Usage: "Plot CPU load average.",
 					Action: func(c *cli.Context) error {
-						err := LoadAvgPlot(c)
+						err := mycli.LoadAvgPlot(c)
 						if err != nil {
 							log.Fatal(err)
 						}

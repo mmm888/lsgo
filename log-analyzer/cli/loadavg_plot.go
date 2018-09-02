@@ -1,10 +1,11 @@
-package main
+package cli
 
 import (
 	"database/sql"
 	"fmt"
 	"time"
 
+	"github.com/mmm888/mycmd/log-analyzer/loadaverage"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 )
@@ -14,36 +15,6 @@ type plotData struct {
 	Time        time.Time
 	LoadAverage float64
 }
-
-/*
-func fromFiletoPlotData(fp string) ([]plotData, error) {
-	f, err := os.Open(fp)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	pds := make([]plotData, 0, 100)
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		var p plotData
-
-		s := strings.Split(scanner.Text(), ",")
-		pf, _ := strconv.ParseFloat(s[2], 64)
-		pt, _ := time.Parse(showTimeFormat, s[1])
-		p = plotData{
-			Host:        s[0],
-			Time:        pt,
-			LoadAverage: pf,
-		}
-
-		pds = append(pds, p)
-	}
-
-	return pds, nil
-}
-*/
 
 func LoadAvgPlot(c *cli.Context) error {
 
@@ -59,8 +30,8 @@ func LoadAvgPlot(c *cli.Context) error {
 	}
 	defer db.Close()
 
-	var s LoadAverage
-	s = NewPlotLoadAverages(db, tableName, median, output)
+	var s loadaverage.LoadAverage
+	s = loadaverage.NewPlotLoadAverages(db, tableName, median, output)
 
 	err = s.GetData()
 	if err != nil {

@@ -1,4 +1,4 @@
-package main
+package loadaverage
 
 import (
 	"database/sql"
@@ -7,7 +7,7 @@ import (
 )
 
 type showLoadAvarages struct {
-	avgs   map[string][]laData
+	avgs   map[string][]LAData
 	median int
 	db     *sql.DB
 	table  string
@@ -15,7 +15,7 @@ type showLoadAvarages struct {
 
 func NewShowLoadAvarages(db *sql.DB, table string, median int) *showLoadAvarages {
 	return &showLoadAvarages{
-		avgs:   make(map[string][]laData),
+		avgs:   make(map[string][]LAData),
 		median: median,
 		db:     db,
 		table:  table,
@@ -35,7 +35,7 @@ func (ss *showLoadAvarages) GetData() error {
 	defer rows.Close()
 
 	for rows.Next() {
-		var la laData
+		var la LAData
 		err = rows.Scan(&la.Start, &la.Host, &la.LoadAverage)
 		if err != nil {
 			return err

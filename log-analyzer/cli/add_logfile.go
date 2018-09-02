@@ -1,10 +1,4 @@
-/*
-directory 以下のログファイルを全て add
-Error: long_l/server300/app.log > eclipse...
-test
-*/
-
-package main
+package cli
 
 import (
 	"bufio"
@@ -18,10 +12,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-)
-
-const (
-	logfileTableName = "logfile"
 )
 
 type logFormat struct {

@@ -1,4 +1,4 @@
-package main
+package loadaverage
 
 import (
 	"database/sql"
@@ -10,7 +10,7 @@ import (
 )
 
 type plotLoadAverages struct {
-	avgs   map[string][]laData
+	avgs   map[string][]LAData
 	median int
 	db     *sql.DB
 	table  string
@@ -19,7 +19,7 @@ type plotLoadAverages struct {
 
 func NewPlotLoadAverages(db *sql.DB, table string, median int, output string) *plotLoadAverages {
 	return &plotLoadAverages{
-		avgs:   make(map[string][]laData),
+		avgs:   make(map[string][]LAData),
 		median: median,
 		db:     db,
 		table:  table,
@@ -39,7 +39,7 @@ func (ps *plotLoadAverages) GetData() error {
 	defer rows.Close()
 
 	for rows.Next() {
-		var la laData
+		var la LAData
 		err = rows.Scan(&la.Start, &la.Host, &la.LoadAverage)
 		if err != nil {
 			return err
@@ -83,9 +83,9 @@ func (ps *plotLoadAverages) Output() error {
 		xValues := make([]time.Time, numValues)
 		yValues := make([]float64, numValues)
 
-		for i, laData := range laDatas {
-			xValues[i] = laData.Start
-			yValues[i] = laData.LoadAverage
+		for i, LAData := range laDatas {
+			xValues[i] = LAData.Start
+			yValues[i] = LAData.LoadAverage
 		}
 
 		series[i] = chart.TimeSeries{

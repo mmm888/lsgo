@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"database/sql"
@@ -7,30 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mmm888/mycmd/log-analyzer/loadaverage"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 )
-
-const (
-	loadavgTableName = "loadavg"
-)
-
-type laData struct {
-	Start       time.Time
-	End         time.Time
-	LoadAverage float64
-	Host        string
-}
-
-func (l *laData) insertDB(stmt *sql.Stmt, median int) error {
-	// start, host, loadavg, median
-	_, err := stmt.Exec(l.Start.Format(showTimeFormat), l.Host, l.LoadAverage, median)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func getCommonData(db *sql.DB, table string, median int) (start, end time.Time, hosts []string, err error) {
 	var query string
@@ -78,11 +58,11 @@ func getCommonData(db *sql.DB, table string, median int) (start, end time.Time, 
 	return start, end, hosts, nil
 }
 
-func getLoadAverageFromDB(start, end time.Time, db *sql.DB, table string, median int, host string) ([]laData, error) {
+func getLoadAverageFromDB(start, end time.Time, db *sql.DB, table string, median int, host string) ([]loadaverage.LAData, error) {
 	var err error
 	var query string
 
-	avgs := make([]laData, 0, 100)
+	avgs := make([]loadaverage.LAData, 0, 100)
 	t := start
 
 	// end まで
@@ -106,7 +86,7 @@ func getLoadAverageFromDB(start, end time.Time, db *sql.DB, table string, median
 			return nil, err
 		}
 
-		s := laData{
+		s := loadaverage.LAData{
 			Start:       t,
 			End:         t.Add(time.Minute),
 			LoadAverage: sum / float64(count),
@@ -133,7 +113,7 @@ func fromDataToLoadavg(db *sql.DB, exportTable, importTable string, median int) 
 
 	var wg sync.WaitGroup
 	mutex := &sync.Mutex{}
-	avgs := make(map[string][]laData)
+	avgs := make(map[string][]loadaverage.LAData)
 	for i := range hs {
 		host := hs[i]
 		wg.Add(1)
@@ -167,7 +147,7 @@ func fromDataToLoadavg(db *sql.DB, exportTable, importTable string, median int) 
 		for _, la := range avgs[host] {
 			var err error
 
-			err = la.insertDB(stmt, median)
+			err = la.InsertDB(stmt, median)
 			errHandler = setErr(errHandler, err)
 		}
 	}
