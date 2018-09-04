@@ -17,6 +17,7 @@ func getCommonData(db *sql.DB, table string, median int) (start, end time.Time, 
 
 	// Get Start time
 	query = fmt.Sprintf("select at from %s order by at asc limit 1", table)
+	fmt.Printf("Exec sql: %s\n", query)
 	row1 := db.QueryRow(query)
 	err = row1.Scan(&start)
 	if err != nil {
@@ -25,6 +26,7 @@ func getCommonData(db *sql.DB, table string, median int) (start, end time.Time, 
 
 	// Get End time
 	query = fmt.Sprintf("select at from %s order by at desc limit 1", table)
+	fmt.Printf("Exec sql: %s\n", query)
 	row2 := db.QueryRow(query)
 	err = row2.Scan(&end)
 	if err != nil {
@@ -35,6 +37,7 @@ func getCommonData(db *sql.DB, table string, median int) (start, end time.Time, 
 
 	// Get hosts
 	query = fmt.Sprintf("select host from %s group by host", table)
+	fmt.Printf("Exec sql: %s\n", query)
 	row3, err := db.Query(query)
 	if err != nil {
 		return time.Time{}, time.Time{}, nil, err
@@ -72,6 +75,7 @@ func getLoadAverageFromDB(start, end time.Time, db *sql.DB, table string, median
 
 		query = fmt.Sprintf("SELECT count(1) FROM %s WHERE at > datetime('%s') AND at < datetime('%s', '+%d minutes') AND host = '%s' AND cpu != 0",
 			table, t.Format(showTimeFormat), t.Format(showTimeFormat), median, host)
+		fmt.Printf("Exec sql: %s\n", query)
 		row1 := db.QueryRow(query)
 		err = row1.Scan(&count)
 		if err != nil {
@@ -80,6 +84,7 @@ func getLoadAverageFromDB(start, end time.Time, db *sql.DB, table string, median
 
 		query = fmt.Sprintf("SELECT sum(cpu) FROM %s WHERE at > datetime('%s') AND at < datetime('%s', '+%d minutes') AND host = '%s' AND cpu != 0",
 			table, t.Format(showTimeFormat), t.Format(showTimeFormat), median, host)
+		fmt.Printf("Exec sql: %s\n", query)
 		row2 := db.QueryRow(query)
 		err = row2.Scan(&sum)
 		if err != nil {
@@ -136,6 +141,7 @@ func fromDataToLoadavg(db *sql.DB, exportTable, importTable string, median int) 
 		return err
 	}
 	query := fmt.Sprintf("insert into %s (start, host, loadavg, median) values (?,?,?,?)", importTable)
+	fmt.Printf("Exec sql: %s\n", query)
 	stmt, err := tx.Prepare(query)
 	if err != nil {
 		return err

@@ -151,6 +151,24 @@ func main() {
 						},
 					},
 				},
+				{
+					Name:  "message",
+					Usage: "List log message of ERROR, WARN.",
+					Action: func(c *cli.Context) error {
+						err := mycli.LoadAvgMessage(c)
+						if err != nil {
+							log.Fatal(err)
+						}
+
+						return nil
+					},
+					Flags: []cli.Flag{
+						cli.IntFlag{
+							Name:  "cpu, c",
+							Value: 95,
+						},
+					},
+				},
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{

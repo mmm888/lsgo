@@ -9,13 +9,13 @@ import (
 	"github.com/urfave/cli"
 )
 
-func LoadAvgPlot(c *cli.Context) error {
-
+func LoadAvgMessage(c *cli.Context) error {
 	dbPath := c.GlobalString("d")
 	dbName := getFileNameWithoutExt(dbPath)
-	tableName := fmt.Sprintf("%s_%s", dbName, loadavgTableName)
+	logfileTable := fmt.Sprintf("%s_%s", dbName, logfileTableName)
+	loadavgTable := fmt.Sprintf("%s_%s", dbName, loadavgTableName)
 	median := c.GlobalInt("m")
-	output := c.String("o")
+	cpu := c.Int("c")
 
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -24,7 +24,7 @@ func LoadAvgPlot(c *cli.Context) error {
 	defer db.Close()
 
 	var s loadaverage.LoadAverage
-	s = loadaverage.NewPlotLoadAverages(db, tableName, median, output)
+	s = loadaverage.NewMessageLoadAverages(db, logfileTable, loadavgTable, median, cpu)
 
 	err = s.GetData()
 	if err != nil {

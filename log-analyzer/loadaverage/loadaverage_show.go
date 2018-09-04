@@ -3,7 +3,6 @@ package loadaverage
 import (
 	"database/sql"
 	"fmt"
-	"log"
 )
 
 type showLoadAvarages struct {
@@ -27,7 +26,6 @@ func (ss *showLoadAvarages) GetData() error {
 	var query string
 
 	query = fmt.Sprintf("select start, host, loadavg from %s where median = %d", ss.table, ss.median)
-	log.Print(query)
 	rows, err := ss.db.Query(query)
 	if err != nil {
 		return nil
