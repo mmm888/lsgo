@@ -31,8 +31,8 @@ func (ms *messageLoadAvarages) GetData() error {
 	var err error
 	var query string
 
-	query = fmt.Sprintf("select start, host from %s where median = %d AND loadavg > %d",
-		ms.loadavgTable, ms.median, ms.cpuusage)
+	query = fmt.Sprintf("select start, host from %s where median = %d AND loadavg > %.3f",
+		ms.loadavgTable, ms.median, float64(ms.cpuusage)/100)
 	log.Println(query)
 	rows, err := ms.db.Query(query)
 	if err != nil {
@@ -59,8 +59,9 @@ func (ms *messageLoadAvarages) GetData() error {
 
 	for host := range avgs {
 		for _, data := range avgs[host] {
-			query = fmt.Sprintf("select alltext from %s where host = %s AND at < %s AND at > %s",
-				ms.logfileTable, host, data.Start, data.End)
+			query = fmt.Sprintf("select alltext from %s where host = '%s' AND at > datetime('%s') AND at < datetime('%s', '+%d minutes') AND (loglevel = 'WARNING' OR loglevel = 'ERROR')",
+				ms.logfileTable, host, data.Start.Format(showTimeFormat), data.End.Format(showTimeFormat), ms.median)
+			//log.Print(query)
 			rows, err := ms.db.Query(query)
 			if err != nil {
 				return err
@@ -84,14 +85,32 @@ func (ms *messageLoadAvarages) GetData() error {
 
 func (ms *messageLoadAvarages) Output() error {
 
+	arr := []string{"a", "b", "c", "a"}
+	m := make(map[string]bool)
+	uniq := []string{}
+
+	for _, ele := range arr {
+		if !m[ele] {
+			m[ele] = true
+			uniq = append(uniq, ele)
+		}
+	}
+
 	messagesList := ms.messages
 	if len(messagesList) == 0 {
 		fmt.Println("Nothing")
 	} else {
 		for host, messages := range messagesList {
 			log.Printf("%s's log", host)
-			for _, alltext := range messages {
-				fmt.Println(alltext)
+			m := make(map[string]bool)
+			//uniq := make([]string, 0, 100)
+
+			for _, message := range messages {
+				if !m[message] {
+					m[message] = true
+					// ホントはログ本文のみ
+					fmt.Println(message)
+				}
 			}
 		}
 	}

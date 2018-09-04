@@ -3,8 +3,8 @@ package cli
 import "path/filepath"
 
 const (
-	logTimeFormat  = "2006-01-02T15:04:05Z0700"
-	showTimeFormat = "2006-01-02 15:04:05"
+	logTimeFormat  = "2006-01-02T03:04:05Z0700"
+	showTimeFormat = "2006-01-02 03:04:05"
 
 	logfileTableName = "logfile"
 	loadavgTableName = "loadavg"
